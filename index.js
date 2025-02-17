@@ -6,6 +6,9 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Client = require('./Schema/Client');
+const auth = require('./modules/auth.js');
+const items = require('./modules/items');
+const orderManage = require('./modules/orderManage');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,6 +42,12 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
+//imported route implement
+
+app.use('/auth', auth);
+app.use('/product', items);
+app.use('/order', orderManage);
+
 // Signup Route
 app.post('/signup', async (req, res) => {
   try {
@@ -66,46 +75,6 @@ app.post('/signup', async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
-  }
-});
-
-
-
-//sign in Route
-app.post('/signin', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user by email
-    const user = await Client.findOne({ email });
-
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Validate password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    // Send token, email, and name in the response
-    res.status(200).json({
-      token,
-      email: user.email,
-      name: user.firstName,
-      address: user.address
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
   }
 });
 
