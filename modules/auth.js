@@ -5,6 +5,25 @@ const Client = require('../Schema/Client')
 const app = express();
 
 
+
+// JWT Middleware
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'Authorization header is missing' });
+    }
+  
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+      req.userId = decoded.userId;
+      next();
+    });
+  };
+  
+
 //signin route
 app.post('/signin', async (req, res) => {
     try {
@@ -75,6 +94,35 @@ app.post('/signup', async (req, res) => {
         res.status(500).send('Server error');
     }
 })
+
+
+
+// Update user profile
+app.put('/update-profile', verifyJWT, async (req, res) => {
+    try {
+        const { firstName, lastName, gender, email, address, mobile, newPassword } = req.body;
+        const userId = req.userId;
+
+        const updatedData = {
+            firstName,
+            lastName,
+            gender,
+            email,
+            address,
+            mobile
+        };
+        if (newPassword) {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            updatedData.password = hashedPassword;
+        }
+        const updatedUser = await Client.findByIdAndUpdate(userId, updatedData, { new: true });
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Failed to update profile' });
+    }
+});
 
 
 module.exports = app;
