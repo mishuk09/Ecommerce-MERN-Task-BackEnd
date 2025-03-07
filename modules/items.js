@@ -3,14 +3,13 @@ const app = express();
 const Post = require('../Schema/Post');
 
 // Fetch all items
-app.get('/items', async (req, res) => {
+app.get('/allitem', async (req, res) => {
     try {
         const items = await Post.find();
 
         if (items.length === 0) { // Check if items array is empty
             return res.status(400).json({ message: 'No items found' });
         }
-
         res.status(200).json({ items });
 
     } catch (error) {

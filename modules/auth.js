@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const jswt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
+
 const Client = require('../Schema/Client')
 const app = express();
 
@@ -10,19 +11,19 @@ const app = express();
 const verifyJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return res.status(401).json({ message: 'Authorization header is missing' });
+        return res.status(401).json({ message: 'Authorization header is missing' });
     }
-  
+
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(403).json({ message: 'Invalid token' });
-      }
-      req.userId = decoded.userId;
-      next();
+        if (err) {
+            return res.status(403).json({ message: 'Invalid token' });
+        }
+        req.userId = decoded.userId;
+        next();
     });
-  };
-  
+};
+
 
 //signin route
 app.post('/signin', async (req, res) => {
@@ -43,11 +44,12 @@ app.post('/signin', async (req, res) => {
         }
 
         //generate JWT
-        const token = jswt.sign(
-            { userId: user._id, emial: user.email },
+        const token = jwt.sign(
+            { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '5h' }
         );
+
 
         //  send token ,email and name in resposne
         res.status(200).json({
@@ -67,33 +69,68 @@ app.post('/signin', async (req, res) => {
 
 app.post('/signup', async (req, res) => {
     try {
-
         const { firstName, lastName, email, password } = req.body;
 
-        //validate
+        // Validate required fields
         if (!firstName || !lastName || !email || !password) {
             return res.status(400).json({ message: 'Please fill in all fields' });
         }
 
-        //hash the password
+        // Check if email already exists before creating a new user
+        const existingUser = await Client.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email already in use' });
+        }
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        //create and save user
-        const newUser = new Client({
-            firstName,
-            lastName,
-            email,
-            password: hashedPassword
-        })
-
+        // Create and save new user
+        const newUser = new Client({ firstName, lastName, email, password: hashedPassword });
         await newUser.save();
-        res.status(201).json({ message: "User registered successfully", newUser });
+
+        res.status(201).json({ message: "User registered successfully" });
 
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server error');
+        // Check if it's a MongoDB duplicate key error
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'Email already exists' });
+        }
+        console.error("Signup Error:", error.message);
+        res.status(500).json({ message: 'Server error' });
     }
-})
+});
+
+
+// app.post('/signup', async (req, res) => {
+//     try {
+
+//         const { firstName, lastName, email, password } = req.body;
+
+//         //validate
+//         if (!firstName || !lastName || !email || !password) {
+//             return res.status(400).json({ message: 'Please fill in all fields' });
+//         }
+
+//         //hash the password
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         //create and save user
+//         const newUser = new Client({
+//             firstName,
+//             lastName,
+//             email,
+//             password: hashedPassword
+//         })
+
+//         await newUser.save();
+//         res.status(201).json({ message: "User registered successfully", newUser });
+
+//     } catch (error) {
+//         console.error(error.message);
+//         res.status(500).send('Server error');
+//     }
+// })
 
 
 
@@ -124,5 +161,22 @@ app.put('/update-profile', verifyJWT, async (req, res) => {
     }
 });
 
+
+app.get('/dashboard', verifyJWT, async (req, res) => {
+    try {
+        // Fetch user data using the userId from the decoded JWT token
+        const user = await Client.findById(req.userId).select('-password'); // Exclude password field
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Send user profile data as response
+        res.status(200).json({ profile: user });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 module.exports = app;

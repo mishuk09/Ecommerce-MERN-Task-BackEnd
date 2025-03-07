@@ -1,15 +1,25 @@
 const express = require('express');
 const app = express();
+const cors = require('cors')
 const port = 5000;
 require('dotenv').config();
 const mongoose = require('mongoose');
 const auth = require('./modules/auth.js');
 const items = require('./modules/items');
 const orderManage = require('./modules/orderManage');
+const cart = require('./modules/cart');
 
+
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//cors policy
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 // MongoDB connection
 mongoose.connect(process.env.CONNECTION, {
   useNewUrlParser: true,
@@ -25,8 +35,9 @@ db.once('open', () => {
 
 //imported route implement
 app.use('/auth', auth);
-app.use('/product', items);
+app.use('/items', items);
 app.use('/order', orderManage);
+app.use('/cart', cart);
 
 
 app.listen(port, () => {

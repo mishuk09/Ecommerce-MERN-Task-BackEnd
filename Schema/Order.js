@@ -8,6 +8,7 @@ const orderSchema = new mongoose.Schema({
     city: String,
     address: String,
     landmark: String,
+    payment: Boolean,
     cartItems: [
         {
             productId: mongoose.Schema.Types.ObjectId,
