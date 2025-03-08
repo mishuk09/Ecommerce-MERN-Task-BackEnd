@@ -8,6 +8,7 @@ const auth = require('./modules/auth.js');
 const items = require('./modules/items');
 const orderManage = require('./modules/orderManage');
 const cart = require('./modules/cart');
+const wishlist = require('./modules/wishlist');
 
 
 app.use(cors());
@@ -38,6 +39,7 @@ app.use('/auth', auth);
 app.use('/items', items);
 app.use('/order', orderManage);
 app.use('/cart', cart);
+app.use('/wishlist', wishlist);
 
 
 app.listen(port, () => {
