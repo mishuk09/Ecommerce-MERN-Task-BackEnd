@@ -9,6 +9,9 @@ const items = require('./modules/items');
 const orderManage = require('./modules/orderManage');
 const cart = require('./modules/cart');
 const wishlist = require('./modules/wishlist');
+const home = require('./modules/home');
+const Category = require('./modules/Category');
+const New = require('./modules/New');
 
 
 app.use(cors());
@@ -40,6 +43,9 @@ app.use('/items', items);
 app.use('/order', orderManage);
 app.use('/cart', cart);
 app.use('/wishlist', wishlist);
+app.use('/home', home);
+app.use('/cate', Category);
+app.use('/new', New);
 
 
 app.listen(port, () => {
