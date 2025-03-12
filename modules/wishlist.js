@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const Wishlist = require('../Schema/Wishlist');
 
-
 // Add item to wishlist
 app.post('/add', async (req, res) => {
     const { email, productId } = req.body;
@@ -15,7 +14,6 @@ app.post('/add', async (req, res) => {
         res.json({ message: "Already in Wishlist" })
     }
 });
-
 
 // Get  wishlist item
 app.post("/get", async (req, res) => {
@@ -30,11 +28,9 @@ app.post("/get", async (req, res) => {
 // Remove wishlist
 app.post("/remove", async (req, res) => {
     const { email, productId } = req.body;
-
     if (!email || !productId) {
         return res.status(400).json({ message: "Email and productId are required" });
     }
-
     const deletedItem = await Wishlist.findOneAndDelete({ email, productId });
 
     if (deletedItem) {
