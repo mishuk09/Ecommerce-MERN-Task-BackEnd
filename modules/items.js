@@ -19,6 +19,25 @@ app.get('/allitem', async (req, res) => {
 });
 
 
+// Search products by title
+app.get("/search", async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) {
+            return res.status(400).json({ message: "Search query is required" });
+        }
+
+        // Find products where the title contains the search query (case-insensitive)
+        const results = await Post.find({ title: { $regex: query, $options: "i" } });
+
+        res.json({ items: results });
+    } catch (error) {
+        console.error("Search error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+
 // Fetch single item
 app.get('/:id', async (req, res) => {
     try {
